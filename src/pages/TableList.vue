@@ -4,51 +4,23 @@
       <div class="row">
         <div class="col-12">
           <card class="strpied-tabled-with-hover"
-                body-classes="table-full-width table-responsive"
-          >
+                body-classes="table-full-width table-responsive">
             <template slot="header">
-              <h4 class="card-title">Striped Table with Hover</h4>
-              <p class="card-category">Here is a subtitle for this table</p>
-            </template>
-            <l-table class="table-hover table-striped"
-                     :columns="table1.columns"
-                     :data="table1.data">
-            </l-table>
-          </card>
-
-        </div>
-
-        <div class="col-12">
-          <card class="card-plain">
-            <template slot="header">
-              <h4 class="card-title">Table on Plain Background</h4>
-              <p class="card-category">Here is a subtitle for this table</p>
-            </template>
-            <div class="table-responsive">
-              <l-table class="table-hover"
-                       :columns="table2.columns"
-                       :data="table2.data">
-              </l-table>
-            </div>
-          </card>
-        </div>
-
-        <div class="col-12">
-          <card class="strpied-tabled-with-hover"
-                body-classes="table-full-width table-responsive"
-          >
-            <template slot="header">
-              <h4 class="card-title">Small table</h4>
-              <p class="card-category">Here is a subtitle for this table</p>
+              <el-upload
+                action="/your-upload-api"
+                :before-upload="beforeUpload"
+                drag
+                list-type="text">
+                <i class="el-icon-upload"></i>
+                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+              </el-upload>
             </template>
             <l-table class="table-hover table-striped table-sm"
-                     :columns="table1.columns"
-                     :data="table1.data">
+                     :columns="headers"
+                     :data="jsonData">
             </l-table>
           </card>
-
         </div>
-
       </div>
     </div>
   </div>
@@ -56,42 +28,7 @@
 <script>
   import LTable from 'src/components/Table.vue'
   import Card from 'src/components/Cards/Card.vue'
-  const tableColumns = ['Id', 'Name', 'Salary', 'Country', 'City']
-  const tableData = [{
-    id: 1,
-    name: 'Dakota Rice',
-    salary: '$36.738',
-    country: 'Niger',
-    city: 'Oud-Turnhout'
-  },
-  {
-    id: 2,
-    name: 'Minerva Hooper',
-    salary: '$23,789',
-    country: 'Curaçao',
-    city: 'Sinaai-Waas'
-  },
-  {
-    id: 3,
-    name: 'Sage Rodriguez',
-    salary: '$56,142',
-    country: 'Netherlands',
-    city: 'Baileux'
-  },
-  {
-    id: 4,
-    name: 'Philip Chaney',
-    salary: '$38,735',
-    country: 'Korea, South',
-    city: 'Overland Park'
-  },
-  {
-    id: 5,
-    name: 'Doris Greene',
-    salary: '$63,542',
-    country: 'Malawi',
-    city: 'Feldkirchen in Kärnten'
-  }]
+  import * as XLSX from 'xlsx';
   export default {
     components: {
       LTable,
@@ -99,17 +36,54 @@
     },
     data () {
       return {
-        table1: {
-          columns: [...tableColumns],
-          data: [...tableData]
-        },
-        table2: {
-          columns: [...tableColumns],
-          data: [...tableData]
-        }
+        jsonData: [],
+        headers: [],
       }
-    }
+    },
+    methods: {
+      beforeUpload(file) {
+        // 在这里可以添加一些文件上传前的逻辑，如果返回 false 则取消上传
+        this.parseExcel(file);
+        return true;
+      },
+      parseExcel(file) {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          // 选择第一个工作表
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+
+          // 将 Excel 转换为 JSON
+          this.jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          // 提取表头
+          if (this.jsonData.length > 0) {
+            this.headers = this.jsonData[0];
+          }
+        };
+        console.log(this.jsonData);
+        reader.readAsArrayBuffer(file);
+      },
+      uploadExcel() {
+        // 在这里处理上传逻辑，例如将数据发送到服务器
+
+      },
+    },
   }
 </script>
 <style>
+.el-upload{
+  width: 100%;
+}
+.el-upload-dragger{
+  width: 100%;
+  height: 100px;
+}
+.el-upload-dragger .el-icon-upload{
+  margin: 4px 0 16px;
+}
+
 </style>
